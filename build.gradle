@@ -1,3 +1,29 @@
+loadConfiguration()
+
+/*
+def loadConfiguration() {
+    def environment = hasProperty('env') ? env : 'dev'
+    setProperty 'environment', environment
+}
+*/
+
+def loadConfiguration() {
+            def environment = ext.has('env') ? env : 'dev'
+            def database_file = "database_"+environment+".properties"
+            ext.set('environment', environment)
+            println "Environment is set to $environment"
+            println "Environment is"+ ext.get('environment')
+            def configFile = file('src/main/resources/database_'+environment+'.properties')
+            Properties props = new Properties()
+            props.load(new FileInputStream(configFile))
+            project.ext['flyway.user']= props['user']
+            project.ext['flyway.password']=props['password']
+            project.ext['flyway.url']=props['url']
+            project.ext['flyway.driver']=props['driver']
+
+}
+
+
 buildscript {
     repositories {
         mavenCentral()
@@ -10,11 +36,14 @@ buildscript {
     }
 }
 
+//apply from: 'tasks.gradle'
 apply plugin: 'java'
-apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'spring-boot'
 apply plugin: 'flyway'
+apply plugin: 'groovy'
+
+//processResources.dependsOn copyConfiguration
 
 
 jar {
@@ -44,12 +73,6 @@ dependencies {
     testCompile("junit:junit")
 }
 
-flyway {
-    driver = 'org.postgresql.Driver'
-    url = 'jdbc:postgresql://localhost:5432/flywaypoc_db'
-    user = 'flywaypoc_user'
-    password = 'password'
-}
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.11'
